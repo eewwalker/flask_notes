@@ -21,10 +21,12 @@ connect_db(app)
 
 toolbar = DebugToolbarExtension(app)
 
+
 @app.get('/')
 def redirect_root_to_register():
     """ Root route to register """
     return redirect('/register')
+
 
 @app.route('/register', methods = ['GET', 'POST'])
 def register():
@@ -39,6 +41,14 @@ def register():
         first_name = form.first_name.data
         last_name = form.last_name.data
 
+        if User.query.filter_by(username = username).one_or_none():
+            form.username.errors = ["Username already exists"]
+            return render_template("register_form.html", form=form)
+        if User.query.filter_by(email = email).one_or_none():
+            form.email.errors = ["Email already exists"]
+            return render_template("register_form.html", form=form)
+
+
         new_user = User.register(username, password, email, first_name, last_name)
 
         db.session.add(new_user)
@@ -50,6 +60,7 @@ def register():
 
     else:
         return render_template("register_form.html", form=form)
+
 
 @app.route('/login', methods = ['GET', 'POST'])
 def login():
@@ -80,13 +91,14 @@ def render_user_page(username):
     form = CSRFProtectForm()
 
     if "username" not in session or username != session["username"]:
-        flash("You must log in!")
+        flash("You are not authorized!")
         return redirect("/")
 
     user = User.query.get_or_404(username)
 
 
     return render_template("user.html", user=user, form=form)
+
 
 @app.post("/logout")
 def logout():

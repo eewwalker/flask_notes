@@ -21,7 +21,7 @@ class User(db.Model):
         db.String(20),
         primary_key=True
     )
-    password = db.Column(
+    hashed_password = db.Column(
         db.String(100),
         nullable=False
     )
@@ -44,7 +44,12 @@ class User(db.Model):
         """Register user w/hashed password & return user."""
         hashed = bcrypt.generate_password_hash(password).decode('utf8')
 
-        return cls(username=username, password=hashed, email=email, first_name=first_name, last_name=last_name)
+        return cls(
+            username=username,
+            hashed_password=hashed,
+            email=email,
+            first_name=first_name,
+            last_name=last_name)
 
     @classmethod
     def authenticate(cls, username, password):
@@ -54,7 +59,7 @@ class User(db.Model):
         """
         u = cls.query.filter_by(username=username).one_or_none()
 
-        if u and bcrypt.check_password_hash(u.password, password):
+        if u and bcrypt.check_password_hash(u.hashed_password, password):
             return u
         else:
             return False
