@@ -3,7 +3,7 @@ import os
 from flask import Flask, request, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 from models import db, connect_db, User
-from forms import RegisterUserForm
+from forms import RegisterUserForm, LoginForm
 
 app = Flask(__name__)
 
@@ -50,3 +50,23 @@ def register():
 
     else:
         return render_template("register_form.html", form=form)
+
+@app.route('/login', methods = ['GET', 'POST'])
+def login():
+    """ Login page to process form or render page """
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        user = User.authenticate(username, password)
+
+        if user:
+            session["username"] = user.username
+            return redirect(f"users/{user.username}")
+        else:
+            form.username.errors = ["Invalid Username or Password"]
+
+    return render_template("login_form.html", form=form)
