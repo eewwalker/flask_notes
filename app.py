@@ -3,7 +3,7 @@ import os
 from flask import Flask, request, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 from models import db, connect_db, User
-from forms import RegisterUserForm, LoginForm
+from forms import RegisterUserForm, LoginForm, CSRFProtectForm
 
 app = Flask(__name__)
 
@@ -70,3 +70,31 @@ def login():
             form.username.errors = ["Invalid Username or Password"]
 
     return render_template("login_form.html", form=form)
+
+
+
+@app.get("/users/<username>")
+def render_user_page(username):
+    """Render secure page for user information"""
+
+    form = CSRFProtectForm()
+
+    if "username" not in session or username != session["username"]:
+        flash("You must log in!")
+        return redirect("/")
+
+    user = User.query.get_or_404(username)
+
+
+    return render_template("user.html", user=user, form=form)
+
+@app.post("/logout")
+def logout():
+    """Logs user out and redirects to homepage."""
+
+    form = CSRFProtectForm()
+
+    if form.validate_on_submit():
+        session.pop("username", None)
+
+    return redirect("/")

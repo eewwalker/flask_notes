@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% if "username" in session %}
+  <h2>Hello, {{ user.username }}  ({{ user.first_name }} {{ user.last_name }})!</h2>
+  <p>Email: {{ user.email }}</p>
+  <form action="/logout" method="POST">
+    {{form.hidden_tag()}}
+    <button type="submit" class="btn btn-primary">Logout</button>
+  </form>
+
+{% endif %}
+
+
+{% endblock %}
