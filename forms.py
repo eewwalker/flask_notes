@@ -45,6 +45,20 @@ class NewNoteForm(FlaskForm):
     )
 
 
+class UpdateNoteForm(FlaskForm):
+    """ Form to add new note """
+
+    title = StringField(
+        "Note Title",
+        validators=[InputRequired(), Length(max=100)]
+    )
+    content = TextAreaField(
+        "Note Content",
+        validators=[InputRequired()]
+
+    )
+
+
 
 class CSRFProtectForm(FlaskForm):
     """Form just for CSRF Protection"""

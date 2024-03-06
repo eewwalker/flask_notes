@@ -8,7 +8,9 @@
   {% for note in notes %}
   <li>
     <a href="/notes/{{ note.id }}/update">{{ note.title }}</a>
-    <form action="/notes/{{ note.id }}/delete" method="POST">Delete Note</form>
+    <form action="/notes/{{ note.id }}/delete" method="POST">
+      <button>Delete Note</button>
+    </form>
   </li>
   {% endfor %}
 </ul>
@@ -22,6 +24,7 @@
 </form>
 
 <form action="/users/{{ user.username }}/delete" method="POST">
+  {{ form.hidden_tag() }}
   <button>Delete User</button>
 </form>
 
