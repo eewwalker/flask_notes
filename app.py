@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, request, redirect, render_template, flash, session
+from flask import Flask, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 from models import db, connect_db, User, Note
 from forms import RegisterUserForm, LoginForm, \
@@ -88,11 +88,12 @@ def login():
 def render_user_page(username):
     """Render secure page for user information"""
 
-    form = CSRFProtectForm()
-
     if AUTH_KEY not in session or username != session[AUTH_KEY]:
         flash("You are not authorized!")
         return redirect("/")
+
+    form = CSRFProtectForm()
+
 
     user = User.query.get_or_404(username)
     notes = user.notes
@@ -115,11 +116,12 @@ def logout():
 @app.post('/users/<username>/delete')
 def delete_user(username):
     """ Delete user """
-    form = CSRFProtectForm()
-
     if AUTH_KEY not in session or username != session[AUTH_KEY]:
         flash("You are not authorized!")
         return redirect("/")
+
+    form = CSRFProtectForm()
+
 
     if form.validate_on_submit():
         user = User.query.get_or_404(username)
@@ -128,7 +130,7 @@ def delete_user(username):
 
         db.session.delete(user)
         db.session.commit()
-        session.pop(AUTH_KEY, None)
+        session.pop(AUTH_KEY)
 
     return redirect("/")
 
@@ -136,13 +138,14 @@ def delete_user(username):
 @app.route('/users/<username>/notes/add', methods=['GET', 'POST'])
 def update_note(username):
     """ Render form to add note or submit form data """
+    if AUTH_KEY not in session or username != session[AUTH_KEY]:
+        flash("You are not authorized!")
+        return redirect("/")
+
     user = User.query.get_or_404(username)
 
     form = NewNoteForm()
 
-    if AUTH_KEY not in session or username != session[AUTH_KEY]:
-        flash("You are not authorized!")
-        return redirect("/")
 
     if form.validate_on_submit():
         title = form.title.data
@@ -164,14 +167,15 @@ def update_note(username):
 @app.route('/notes/<int:id>/update', methods=['GET', 'POST'])
 def add_note(id):
     """ Render form to add note or submit form data """
+
     current_note = Note.query.get_or_404(id)
-    current_user = current_note.user
 
-    form = UpdateNoteForm(obj=current_note)
 
-    if AUTH_KEY not in session or current_user.username != session[AUTH_KEY]:
+    if AUTH_KEY not in session or current_note.owner_username != session[AUTH_KEY]:
         flash("You are not authorized!")
         return redirect("/")
+
+    form = UpdateNoteForm(obj=current_note)
 
     if form.validate_on_submit():
         current_note.title = form.title.data
@@ -179,25 +183,27 @@ def add_note(id):
 
         db.session.commit()
 
-        return redirect(f'/users/{current_user.username}')
+        return redirect(f'/users/{current_note.owner_username}')
     else:
         return render_template(
             "update_note.html",
             form=form,
-            user=current_user)
+            note=current_note)
 
 
 @app.post("/notes/<int:id>/delete")
 def delete_note(id):
     """ Delete a note from db and redirect to the userpage"""
-    current_note = Note.query.get_or_404(id)
-    current_user = current_note.user
 
-    if AUTH_KEY not in session or current_user.username != session[AUTH_KEY]:
+    current_note = Note.query.get_or_404(id)
+
+    if AUTH_KEY not in session or current_note.owner_username != session[AUTH_KEY]:
         flash("You are not authorized!")
         return redirect("/")
+
+
 
     db.session.delete(current_note)
     db.session.commit()
 
-    return redirect(f'/users/{current_user.username}')
+    return redirect(f'/users/{current_note.owner_username}')

@@ -9,6 +9,7 @@
   <li>
     <a href="/notes/{{ note.id }}/update">{{ note.title }}</a>
     <form action="/notes/{{ note.id }}/delete" method="POST">
+      {{form.hidden_tag()}}
       <button>Delete Note</button>
     </form>
   </li>
