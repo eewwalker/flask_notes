@@ -2,8 +2,8 @@ import os
 
 from flask import Flask, request, redirect, render_template, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
-from models import db, connect_db, User
-from forms import RegisterUserForm, LoginForm, CSRFProtectForm
+from models import db, connect_db, User, Note
+from forms import RegisterUserForm, LoginForm, CSRFProtectForm, NewNoteForm
 
 app = Flask(__name__)
 
@@ -111,3 +111,53 @@ def logout():
         session.pop(AUTH_KEY, None)
 
     return redirect("/")
+
+
+@app.post('/users/<username>/delete')
+def delete_user(username):
+    """ Delete user """
+    form = CSRFProtectForm()
+
+    if AUTH_KEY not in session or username != session[AUTH_KEY]:
+        flash("You are not authorized!")
+        return redirect("/")
+
+    if form.validate_on_submit():
+        user = User.query.get_or_404(username)
+
+        Note.query.filter_by(owner_username = username).delete()
+
+        db.session.delete(user)
+        db.session.commit()
+        session.pop(AUTH_KEY, None)
+
+    return redirect("/")
+
+@app.route('/users/<username>/notes/add', methods=['GET', 'POST'])
+def add_note(username):
+    """ Render form to add note or submit form data """
+    user = User.query.get_or_404(username)
+
+    form = NewNoteForm()
+
+    if AUTH_KEY not in session or username != session[AUTH_KEY]:
+        flash("You are not authorized!")
+        return redirect("/")
+
+    if form.validate_on_submit():
+        title = form.title.data
+        content = form.content.data
+
+        new_note = Note(
+            title = title,
+            content = content,
+            owner_username = username)
+
+        db.session.add(new_note)
+        db.session.commit()
+
+        return redirect(f'/users/{username}')
+    else:
+        return render_template("add_note.html", form = form, user = user)
+
+
