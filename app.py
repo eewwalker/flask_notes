@@ -11,7 +11,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     "DATABASE_URL", 'postgresql:///flask_notes')
 app.config['SECRET_KEY'] = "oh-so-secret"
 
-
+AUTH_KEY = "username"
 
 # app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
@@ -54,7 +54,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        session["username"] = new_user.username
+        session[AUTH_KEY] = new_user.username
 
         return redirect(f"users/{new_user.username}")
 
@@ -75,7 +75,7 @@ def login():
         user = User.authenticate(username, password)
 
         if user:
-            session["username"] = user.username
+            session[AUTH_KEY] = user.username
             return redirect(f"users/{user.username}")
         else:
             form.username.errors = ["Invalid Username or Password"]
@@ -90,14 +90,15 @@ def render_user_page(username):
 
     form = CSRFProtectForm()
 
-    if "username" not in session or username != session["username"]:
+    if AUTH_KEY not in session or username != session[AUTH_KEY]:
         flash("You are not authorized!")
         return redirect("/")
 
     user = User.query.get_or_404(username)
+    notes = user.notes
 
 
-    return render_template("user.html", user=user, form=form)
+    return render_template("user.html", user=user, notes=notes, form=form)
 
 
 @app.post("/logout")
@@ -107,6 +108,6 @@ def logout():
     form = CSRFProtectForm()
 
     if form.validate_on_submit():
-        session.pop("username", None)
+        session.pop(AUTH_KEY, None)
 
     return redirect("/")

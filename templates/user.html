@@ -4,10 +4,23 @@
 {% if "username" in session %}
   <h2>Hello, {{ user.username }}  ({{ user.first_name }} {{ user.last_name }})!</h2>
   <p>Email: {{ user.email }}</p>
+  <ul>
+    {% for note in notes %}
+      <li>
+        <a href="/notes/{{ note.id }}/update">{{ note.title }}</a>
+        <form action="/notes/{{ note.id }}/delete" method="POST">Delete Note</form>
+      </li>
+    {% endfor %}
+  </ul>
+  <a href="/users/{{ user.username }}/notes/add"><button>Add a note</button></a>
+
   <form action="/logout" method="POST">
     {{form.hidden_tag()}}
     <button type="submit" class="btn btn-primary">Logout</button>
   </form>
+
+  <form action="/users/{{ user.username }}/delete"><button>Delete User</button></form>
+
 
 {% endif %}
 
